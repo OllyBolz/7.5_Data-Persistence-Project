@@ -1,8 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+
+[System.Serializable]
+public class HiScore
+{ 
+    public string playerName;
+    public int hiScore;
+}
 
 public class MainManager : MonoBehaviour
 {
@@ -11,10 +19,14 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text hiScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
+
+    private string hiScorePlayerName = "player137";
+    private int hiScore = 10;
     
     private bool m_GameOver = false;
 
@@ -36,7 +48,9 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
-    }
+        LoadScore();
+		hiScoreText.text = $"Best Score - {hiScorePlayerName}: {hiScore}";
+	}
 
     private void Update()
     {
@@ -72,5 +86,34 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        if (m_Points > hiScore)
+        { 
+            SaveScore();
+        }
     }
+
+	public void SaveScore()
+	{
+		HiScore data = new HiScore();
+		data.playerName = NameManager.playerName;
+        data.hiScore = m_Points;
+
+		string json = JsonUtility.ToJson(data);
+
+		File.WriteAllText(Application.persistentDataPath + "/hiScore.json", json);
+	}
+
+	public void LoadScore()
+	{
+		string path = Application.persistentDataPath + "/hiScore.json";
+		Debug.Log(path);
+		if (File.Exists(path))
+		{
+			string json = File.ReadAllText(path);
+			HiScore data = JsonUtility.FromJson<HiScore>(json);
+
+			hiScorePlayerName = data.playerName;
+			hiScore = data.hiScore;
+		}
+	}
 }
